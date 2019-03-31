@@ -26,15 +26,19 @@ function StartMacro() {
 
             // Number 1 pressed
             if (e.keyCode === 49) {
+                Turning = true;
                 TurnEgg();
             }
             // Number 2 pressed
             else if (e.keyCode === 50) {
+                Feeding = true;
                 FeedPets();
             }
 
             // Number 3 pressed
             else if (e.keyCode === 51) {
+                Turning = false;
+                Feeding = false;
                 StopOperations();
             }
         });
@@ -93,8 +97,6 @@ function FeedPets() {
 }
 
 function StopOperations() {
-    Turning = false;
-    Feeding = false;
     clearTimeout(Timer);
     StopRunningIndicator();
 }
