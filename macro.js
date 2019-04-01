@@ -159,6 +159,7 @@ function StopOperations() {
     Turning  = false;
     Feeding  = false;
     Hatching = false;
+    State    = '';
     clearTimeout(Timer);
     StopRunningIndicator();
 }
