@@ -5,6 +5,7 @@ var Feeding  = false;
 var Hatching = false;
 var Timer    = false;
 var Delay    = 1000;
+var State    = '';
 
 function StartMacro() {
 
@@ -46,9 +47,6 @@ function StartMacro() {
 
             // Number 4 pressed
             else if (e.keyCode === 52) {
-                Turning  = false;
-                Feeding  = false;
-                Hatching = false;
                 StopOperations();
             }
         });
@@ -66,25 +64,53 @@ function StopRunningIndicator() {
 
 
 function TurnEgg() {
-    var Next = $('#profile a[title="Next"]');
-    var Turn = $('#profile button[onclick*=turn_egg]');
+    var Hatchery = $('#hatchery');
+    var Profile = $('#profile');
+    var Next = Profile.find('a[title="Next"]');
+    var Turn = Profile.find('button[onclick*=turn_egg]');
     var Dialog = $('.ui-dialog-buttonpane').find('button');
-
+    var TurnIcon = Hatchery.find('img[title="Turn Egg"]');
+    var Reset = $('#menu li .hatchery a span');
+    
     RunningIndicator();
-
-    if (Dialog.length !== 0) {
-        Dialog.click();
+    
+    // We are on the hatchery page
+    if (Hatchery.length !== 0) {
+        
+        // Got pet to turn
+        if (TurnIcon.length > 0) {
+            TurnIcon.eq(0).parent().parent().children('a').children('img').click();
+            State = 'check_egg';
+        }
+        
+        // No pet to turn exiting macro
+        else {
+            StopOperations();        
+        }
     }
+    
+    // We are on the profile page
+    else {
+        if (Dialog.length !== 0) {
+            Dialog.click();
+        }
 
-    if (Turn.length !== 0) {
-        Turn.click();
-    }
-
-    else if (Next.length !== 0) {
-        Timer && clearTimeout(Timer);
-        Timer = setTimeout(function () {
-            Next.click();
-        }, Delay);
+        if (Turn.length !== 0) {
+            Turn.click();
+            State = 'next_page';
+        }
+        
+        else if (State === 'check_egg' && Turn.length === 0) {
+            Reset.click();
+        }
+        
+        else if (Next.length !== 0) {
+            Timer && clearTimeout(Timer);
+            Timer = setTimeout(function () {
+                State = 'check_egg';
+                Next.click();            
+            }, Delay);
+        }
     }
 }
 
@@ -93,7 +119,7 @@ function HatchPets() {
     
     var Pet = $('input[name="PetID[]"]').eq(0);
     var Hatch = $('#profile button[onclick*=hatch_egg]');
-    var Reset = $('#menu li .hatchery a');
+    var Reset = $('#menu li .hatchery a span');
 
     RunningIndicator();
 
@@ -130,6 +156,9 @@ function FeedPets() {
 }
 
 function StopOperations() {
+    Turning  = false;
+    Feeding  = false;
+    Hatching = false;
     clearTimeout(Timer);
     StopRunningIndicator();
 }
