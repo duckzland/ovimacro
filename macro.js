@@ -113,7 +113,6 @@ function TurnEgg() {
     var Turn = Profile.find('button[onclick*=turn_egg]');
     var Dialog = $('.ui-dialog-buttonpane').find('button');
     var TurnIcon = Hatchery.find('img[title="Turn Egg"]');
-    var Reset = $('#menu li .hatchery a span');
     
     RunningIndicator();
    
@@ -175,30 +174,45 @@ function TurnEgg() {
 
 
 function HatchPets() {
-    
-    var Pet = $('input[name="PetID[]"]').eq(0);
-    var Hatch = $('#profile button[onclick*=hatch_egg]');
-    var Reset = $('#menu li .hatchery a span');
+    var Hatchery = $('#hatchery');
+    var Profile = $('#profile');
+    var SelfPage = $('button[onclick*=fbinvite]');  
+    var Hatch = $('#profile button[onclick*=pet_turn_egg]');
+    var HatchIcon = Hatchery.find('img[title="Hatch Egg"]');
 
     RunningIndicator();
 
-    if (Pet.length !== 0) {
-        Pet.click();
+    if (SelfPage.length !== 0) {
+        goToHatchery();    
     }
-    else if (Hatch.length !== 0) {
-        Hatch.click();
+    
+    else if (Hatchery.length !== 0) {
+        // Got pet to hatch
+        if (HatchIcon.length > 0) {
+            HatchIcon.eq(0).parent().parent().children('a').children('img').click();
+        }
+        
+        // No pet to turn exiting macro
+        else {
+            StopOperations();
+        }
     }
-    else if (Reset.length !== 0) {
-        Timer && clearTimeout(Timer);
-        Timer = setTimeout(function () {
-            Reset.click();
-        }, Delay);
+    
+    else {
+        if (Hatch.length !== 0) {
+            Hatch.click();
+        }
+        else {
+            Timer && clearTimeout(Timer);
+            Timer = setTimeout(function () {
+                goToHatchery();
+            }, Delay);
+        }
     }
 }
 
 
 function FeedPets() {
-    var Hatchery = $('#hatchery');
     var Profile = $('#profile');
     var SelfPage = $('button[onclick*=fbinvite]');  
     var PetPage = $('#src_pets #sub_overview #enclosures');
