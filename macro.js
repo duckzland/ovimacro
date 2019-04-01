@@ -6,6 +6,7 @@ var Hatching = false;
 var Timer    = false;
 var Delay    = 1000;
 var State    = '';
+var Counter  = 0;
 
 function StartMacro() {
 
@@ -63,9 +64,31 @@ function StopRunningIndicator() {
 }
 
 
+function goToMyPage() {
+    $('#header #self .avatar img').click();
+}
+
+
+function goToHatchery() {
+    $('#menu li .hatchery a span').click();
+}
+
+
+function goToFriend(n = 0) {
+    $('#sub_feed #user .friends ul li img').eq(n).click();
+}
+
+
+function hasFriend(n = 0) {
+    return $('#sub_feed #user .friends ul li img').eq(n).length > 0;    
+}
+
+
 function TurnEgg() {
     var Hatchery = $('#hatchery');
     var Profile = $('#profile');
+    var FriendPage = $('button[onclick*=edit_friendship]');
+    var SelfPage = $('button[onclick*=fbinvite]');                   
     var Next = Profile.find('a[title="Next"]');
     var Turn = Profile.find('button[onclick*=turn_egg]');
     var Dialog = $('.ui-dialog-buttonpane').find('button');
@@ -73,9 +96,25 @@ function TurnEgg() {
     var Reset = $('#menu li .hatchery a span');
     
     RunningIndicator();
+   
+    // We are on our own front page
+    if (SelfPage.length !== 0) {
+        if (hasFriend(Counter)) {
+            goToFriend(Counter);
+            Counter++;
+        }
+        else {
+            StopOperations();
+        }
+    }
     
+    // We are on the friend frontpage
+    else if (FriendPage.length !== 0) {
+        goToHatchery();
+    }
+             
     // We are on the hatchery page
-    if (Hatchery.length !== 0) {
+    else if (Hatchery.length !== 0) {
         
         // Got pet to turn
         if (TurnIcon.length > 0) {
@@ -85,7 +124,7 @@ function TurnEgg() {
         
         // No pet to turn exiting macro
         else {
-            StopOperations();        
+            goToMyPage();
         }
     }
     
@@ -101,7 +140,7 @@ function TurnEgg() {
         }
         
         else if (State === 'check_egg' && Turn.length === 0) {
-            Reset.click();
+            goToHatchery();
         }
         
         else if (Next.length !== 0) {
@@ -160,6 +199,7 @@ function StopOperations() {
     Feeding  = false;
     Hatching = false;
     State    = '';
+    Counter  = 0;
     clearTimeout(Timer);
     StopRunningIndicator();
 }
