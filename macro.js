@@ -1,9 +1,10 @@
 
-var Started = false;
-var Turning = false;
-var Feeding = false;
-var Timer   = false;
-var Delay   = 1000;
+var Started  = false;
+var Turning  = false;
+var Feeding  = false;
+var Hatching = false;
+var Timer    = false;
+var Delay    = 1000;
 
 function StartMacro() {
 
@@ -16,7 +17,9 @@ function StartMacro() {
             if (Turning) {
                 TurnEgg();
             }
-
+            else if (Hatching) {
+                HatchPets();    
+            }
             else if (Feeding) {
                 FeedPets();
             }
@@ -34,11 +37,18 @@ function StartMacro() {
                 Feeding = true;
                 FeedPets();
             }
-
+        
             // Number 3 pressed
             else if (e.keyCode === 51) {
-                Turning = false;
-                Feeding = false;
+                Hatching = true;
+                HatchPets();
+            }
+
+            // Number 4 pressed
+            else if (e.keyCode === 52) {
+                Turning  = false;
+                Feeding  = false;
+                Hatching = false;
                 StopOperations();
             }
         });
@@ -74,6 +84,29 @@ function TurnEgg() {
         Timer && clearTimeout(Timer);
         Timer = setTimeout(function () {
             Next.click();
+        }, Delay);
+    }
+}
+
+
+function HatchPets() {
+    
+    var Pet = $('input[name="PetID[]"]').eq(0);
+    var Hatch = $('#profile button[onclick*=hatch_egg]');
+    var Reset = $('#menu li .hatchery a');
+
+    RunningIndicator();
+
+    if (Pet.length !== 0) {
+        Pet.click();
+    }
+    else if (Hatch.length !== 0) {
+        Hatch.click();
+    }
+    else if (Reset.length !== 0) {
+        Timer && clearTimeout(Timer);
+        Timer = setTimeout(function () {
+            Reset.click();
         }, Delay);
     }
 }
