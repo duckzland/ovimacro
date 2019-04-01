@@ -79,8 +79,28 @@ function goToFriend(n = 0) {
 }
 
 
+function goToPetPage() {
+    $('#menu li .pets a span').click();
+}
+
+
+function goToPetTab(n = 0) {
+    $('#src_pets #sub_overview #enclosures .ui-sortable li a').eq(n).click();
+}
+
+
 function hasFriend(n = 0) {
     return $('#sub_feed #user .friends ul li img').eq(n).length > 0;    
+}
+
+
+function hasPetTab(n = 0) {
+    return $('#src_pets #sub_overview #enclosures .ui-sortable li a').eq(n).length > 0;
+}
+
+
+function isPetTabActive(n = 0) {
+    return $('#src_pets #sub_overview #enclosures .ui-sortable li').eq(n).hasClass('ui-tabs-active');
 }
 
 
@@ -178,19 +198,56 @@ function HatchPets() {
 
 
 function FeedPets() {
+    var Hatchery = $('#hatchery');
+    var Profile = $('#profile');
+    var SelfPage = $('button[onclick*=fbinvite]');  
+    var PetPage = $('#src_pets #sub_overview #enclosures');
     var Next = $('#profile a[title="Next"]');
     var Feed = $('#profile button[onclick*=pet_feed]');
 
     RunningIndicator();
 
-    if (Feed.length !== 0) {
-        Feed.click();
+    if (SelfPage.length !== 0) {
+        goToPetPage();
     }
-    else if (Next.length !== 0) {
-        Timer && clearTimeout(Timer);
-        Timer = setTimeout(function() {
-            Next.click();
-        }, Delay);
+    
+    else if (PetPage.length !== 0) {
+        if (hasPetTab(Counter)) {
+            goToPetTab(Counter);
+        }
+        else {
+            StopOperations();
+        }
+        
+        if (isPetTabActive(Counter) && State <= 0) {
+            Timer && clearTimeout(Timer);
+            Timer = setTimeout(function() {
+                var Pets = $('#src_pets #sub_overview #enclosures .ui-section li:visible');
+                State = Pets.length;
+                Pets.eq(0).find('a.pet img').click();
+            }, 50);
+        }
+    }   
+    else {        
+        if (State > 0 ) {
+            if (Feed.length !== 0) {
+                Feed.click();
+            }
+            else if (Next.length !== 0) {
+                Timer && clearTimeout(Timer);
+                Timer = setTimeout(function() {
+                    Next.click();
+                    State--;
+                }, Delay);
+            }
+        }
+        else {
+            Timer && clearTimeout(Timer);
+            Timer = setTimeout(function() {
+                Counter++;
+                goToPetPage();
+            }, Delay);
+        }
     }
 }
 
