@@ -112,7 +112,6 @@ function TurnEgg() {
     var Next = Profile.find('a[title="Next"]');
     var Turn = Profile.find('button[onclick*=turn_egg]');
     var Dialog = $('.ui-dialog-buttonpane').find('button');
-    var TurnIcon = Hatchery.find('img[title="Turn Egg"]');
     
     RunningIndicator();
    
@@ -134,17 +133,21 @@ function TurnEgg() {
              
     // We are on the hatchery page
     else if (Hatchery.length !== 0) {
-        
-        // Got pet to turn
-        if (TurnIcon.length > 0) {
-            TurnIcon.eq(0).parent().parent().children('a').children('img').click();
-            State = 'check_egg';
-        }
-        
-        // No pet to turn exiting macro
-        else {
-            goToMyPage();
-        }
+        Timer && clearTimeout(Timer);
+        Timer = setTimeout(function () {
+            var TurnIcon = Hatchery.find('img[title="Turn Egg"]');
+            
+            // Got pet to turn
+            if (TurnIcon.length > 0) {
+                TurnIcon.eq(0).parent().parent().children('a').children('img').click();
+                State = 'check_egg';
+            }
+
+            // No pet to turn exiting macro
+            else {
+                goToMyPage();
+            }
+        }, Delay);
     }
     
     // We are on the profile page
