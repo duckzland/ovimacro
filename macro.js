@@ -1,12 +1,16 @@
 
 var Started  = false;
-var Turning  = false;
 var Feeding  = false;
-var Hatching = false;
 var Timer    = false;
 var Delay    = 1000;
 var State    = '';
 var Counter  = 0;
+
+var Queues   = [];
+var Friends  = [];
+var Eggs     = [];
+var Mode     = false;
+var Action   = '';
 
 function StartMacro() {
 
@@ -16,14 +20,31 @@ function StartMacro() {
     $(document)
         .off('ajaxComplete.ovipets_macro')
         .on('ajaxComplete.ovipets_macro', function () {
-            if (Turning) {
-                TurnEgg();
-            }
-            else if (Hatching) {
-                HatchPets();    
-            }
-            else if (Feeding) {
+            if (Feeding) {
                 FeedPets();
+            }
+        
+            if (Eggs.length > 0) {
+                Mode = 'ProcessEggs';
+            }
+        
+            console.log('Current Mode', Mode);
+            switch (Mode) {
+                    
+                case 'ScanFriends':
+                    setTimeout(ScanFriends, 300);
+                    break;
+                    
+                case 'ScanEggs' :
+                    setTimeout(ScanEggs(), 300);
+                    break;
+                    
+                case 'ProcessEggs':
+                    setTimeout(ProcessEggs(), 300);
+                    break;
+                case 'StartQueue':
+                    setTimeout(StartQueue(), 300);
+                    break;
             }
         })
         .off('keypress.ovipets_macro')
@@ -31,8 +52,7 @@ function StartMacro() {
 
             // Number 1 pressed
             if (e.keyCode === 49) {
-                Turning = true;
-                TurnEgg();
+                TurningEggs();
             }
             // Number 2 pressed
             else if (e.keyCode === 50) {
@@ -42,8 +62,7 @@ function StartMacro() {
         
             // Number 3 pressed
             else if (e.keyCode === 51) {
-                Hatching = true;
-                HatchPets();
+                HatchingEggs();
             }
 
             // Number 4 pressed
@@ -104,117 +123,6 @@ function isPetTabActive(n = 0) {
 }
 
 
-function TurnEgg() {
-    var Hatchery = $('#hatchery');
-    var Profile = $('#profile');
-    var FriendPage = $('button[onclick*=edit_friendship]');
-    var SelfPage = $('button[onclick*=fbinvite]');                   
-    var Next = Profile.find('a[title="Next"]');
-    var Turn = Profile.find('button[onclick*=turn_egg]');
-    var Dialog = $('.ui-dialog-buttonpane').find('button');
-    
-    RunningIndicator();
-   
-    // We are on our own front page
-    if (SelfPage.length !== 0) {
-        if (hasFriend(Counter)) {
-            goToFriend(Counter);
-            Counter++;
-        }
-        else {
-            StopOperations();
-        }
-    }
-    
-    // We are on the friend frontpage
-    else if (FriendPage.length !== 0) {
-        goToHatchery();
-    }
-             
-    // We are on the hatchery page
-    else if (Hatchery.length !== 0) {
-        Timer && clearTimeout(Timer);
-        Timer = setTimeout(function () {
-            var TurnIcon = Hatchery.find('img[title="Turn Egg"]');
-            
-            // Got pet to turn
-            if (TurnIcon.length > 0) {
-                TurnIcon.eq(0).parent().parent().children('a').children('img').click();
-                State = 'check_egg';
-            }
-
-            // No pet to turn exiting macro
-            else {
-                goToMyPage();
-            }
-        }, Delay);
-    }
-    
-    // We are on the profile page
-    else {
-        if (Dialog.length !== 0) {
-            Dialog.click();
-        }
-
-        if (Turn.length !== 0) {
-            Turn.click();
-            State = 'next_page';
-        }
-        
-        else if (State === 'check_egg' && Turn.length === 0) {
-            goToHatchery();
-        }
-        
-        else if (Next.length !== 0) {
-            Timer && clearTimeout(Timer);
-            Timer = setTimeout(function () {
-                State = 'check_egg';
-                Next.click();            
-            }, Delay);
-        }
-    }
-}
-
-
-function HatchPets() {
-    var Hatchery = $('#hatchery');
-    var Profile = $('#profile');
-    var SelfPage = $('button[onclick*=fbinvite]');  
-    var Hatch = $('#profile button[onclick*=pet_turn_egg]');
-    var HatchIcon = Hatchery.find('img[title="Hatch Egg"]');
-
-    RunningIndicator();
-
-    if (SelfPage.length !== 0) {
-        goToHatchery();    
-    }
-    
-    else if (Hatchery.length !== 0) {
-        // Got pet to hatch
-        if (HatchIcon.length > 0) {
-            HatchIcon.eq(0).parent().parent().children('a').children('img').click();
-        }
-        
-        // No pet to turn exiting macro
-        else {
-            StopOperations();
-        }
-    }
-    
-    else {
-        if (Hatch.length !== 0) {
-            Hatch.click();
-        }
-        else {
-            Timer && clearTimeout(Timer);
-            Timer = setTimeout(function () {
-                goToHatchery();
-            }, Delay);
-        }
-    }
-}
-
-
 function FeedPets() {
     var Profile = $('#profile');
     var SelfPage = $('button[onclick*=fbinvite]');  
@@ -268,14 +176,177 @@ function FeedPets() {
     }
 }
 
+function resetMode(callback = false) {
+    clearTimeout(Timer);
+    Timer = setTimeout(function() {
+        Mode = false;   
+        callback && callback();
+    }, 1);
+}
+
+function resetAction() {
+    Action = '';
+}
+
+function callNextQueue() {
+    setTimeout(function() {
+        var nextFunc = Queues.shift();
+        nextFunc && nextFunc();
+    }, 300);
+}
+
+function StartQueue() {
+    if (Mode === false) {
+        RunningIndicator();
+        var url = '';
+        switch (Action) {
+            case 'TurnEgg':
+                url = $('#header #self .avatar').attr('href')
+                break;
+            case 'HatchEgg':
+                Mode = 'ScanEggs';
+                url = '#!/?src=pets&sub=hatchery';
+                break;
+        }
+
+        if (window.location.hash !==  url) {
+            Mode = 'StartQueue';
+            window.location = url;
+        }
+        else {
+            console.log('firing queue');
+            callNextQueue();
+        }
+    }
+    else if (Mode === 'StartQueue') {
+        resetMode(callNextQueue);
+    }
+}
+
+
+function ScanFriends() {
+    if (Mode === false) {
+        if (Friends.length !== 0) {
+            callNextQueue();
+            return;
+        }
+        Mode = 'ScanFriends';
+        $('fieldset.friends').find('button').click();
+    }
+    else if (Mode === 'ScanFriends') {
+        $('#overlay .friends a.user.avatar').each(function() {
+            Friends.push($(this).attr('href'));
+        });
+        
+        resetMode(ScanFriends);
+    }    
+    
+    console.log('Scanning Friends', Friends);
+}
+
+function ScanEggs() { 
+    var type = (Action === 'TurnEgg') ? 'Turn Egg' : 'Hatch Egg';
+    
+    if (Mode === false) {
+        if (Friends.length === 0) {
+            callNextQueue();
+            return;
+        }
+        Mode = 'ScanEggs';
+        window.location = Friends.pop().replace('#!/?', '#!/?src=pets&sub=hatchery&');
+    }
+    else if (Mode === 'ScanEggs') {
+        setTimeout(function() {
+            $('#hatchery').find('img[title="' + type + '"]').each(function() {
+                Eggs.push($(this).parent().parent().children('a').attr('href'));
+            });
+            setTimeout(function() {
+                if (Eggs.length > 0) {
+                    nextQueue = Queues.shift();
+                    Queues.unshift(ScanEggs);
+                    resetMode(nextQueue);
+                }
+                else {
+                    resetMode(ScanEggs);
+                }
+            }, 300);
+        }, 300);
+    }
+    
+    console.log('Scanning Eggs', Eggs);
+}
+
+function ProcessEggs() { 
+    var type = (Action === 'TurnEgg') ? 'turn_egg' : 'pet_turn_egg';
+
+    if (Mode === false) {
+        if (Eggs.length === 0) {
+            callNextQueue();
+            return;
+        }
+        Mode = 'ProcessEggs';
+        setTimeout(function() {
+            window.location = Eggs.pop();
+        }, 300);
+    }
+    else if (Mode === 'ProcessEggs') {
+        var Dialog = $('.ui-dialog-buttonpane').find('button');
+        var Button = $('#profile').find('button[onclick*=' + type + ']');
+        
+        if (Dialog.length) {
+            Dialog.click();
+        }
+        else if (Button.length !== 0) {
+            Button.click();
+        }
+        else {
+            resetMode(ProcessEggs);
+        }
+    }
+    
+    console.log('Processing Eggs', Eggs);
+}
+
+
+function HatchingEggs() {
+    Action = 'HatchEgg';
+    Queues = [
+        StartQueue,
+        ScanEggs,
+        ProcessEggs,
+        StopOperations
+    ];
+    callNextQueue();
+}
+
+function TurningEggs() {
+    Action = 'TurnEgg';
+    Mode = false;
+    Queues = [
+        StartQueue,
+        ScanFriends,
+        ScanEggs,
+        ProcessEggs,
+        StopOperations
+    ];
+    callNextQueue();
+}
+
+
+
 function StopOperations() {
+    console.log('Stopping Operations');
     Turning  = false;
     Feeding  = false;
     Hatching = false;
     State    = '';
     Counter  = 0;
+    callNextQueue();
     clearTimeout(Timer);
     StopRunningIndicator();
+    resetMode();
+    resetAction();
+    window.location = $('#header #self .avatar').attr('href');
 }
 
 StartMacro();
