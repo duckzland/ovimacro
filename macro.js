@@ -24,11 +24,13 @@ function StartMacro() {
                 FeedPets();
             }
         
-            if (Array.isArray(Eggs) && Eggs.length) {
+            if (Array.isArray(Eggs) && Eggs.length > 0) {
+                console.log('Total Eggs found', Eggs.length);
                 //Mode = 'ProcessEggs';   
             }
         
-            else if (Array.isArray(Friends) && Friends.length) {
+            else if (Array.isArray(Friends) && Friends.length > 0) {
+                console.log('Total Friends found', Friends.length);
                 //Mode = 'ScanEggs';   
             }
         
