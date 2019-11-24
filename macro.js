@@ -26,13 +26,13 @@ function StartMacro() {
         
             if (Array.isArray(Eggs) && Eggs.length > 0) {
                 console.log('Total Eggs found', Eggs.length);
-                Mode = 'ProcessEggs';   
+                //Mode = 'ProcessEggs';   
             }
         
             else {
                 if (Array.isArray(Friends) && Friends.length > 0) {
                     console.log('Total Friends found', Friends.length);
-                    Mode = 'ScanEggs'; 
+                    //Mode = 'ScanEggs'; 
                     console.log('Mode set', Mode);
                 }
             }
@@ -268,7 +268,7 @@ function ScanFriends() {
         
         console.log('Scanning Friends', Friends);
         
-    }, 1500);
+    }, 1000);
 }
 
 function ScanEggs() { 
@@ -288,39 +288,40 @@ function ScanEggs() {
         if (Array.isArray(Friends) && Friends.length) {
             window.location = Friends.pop().replace('#!/?', '#!/?src=pets&sub=hatchery&');
         }
-        //else {
-        //    resetMode(callNextQueue);
-        //}
+        else {
+            resetMode(callNextQueue);
+        }
         
         console.log('Scanning Eggs', Eggs);
         
-    }, 2100);    
+    }, 1000);    
 }
 
 function ProcessEggs() {
-    clearTimeout(Timer);
-    Timer = setTimeout(function() {
+
         Mode = 'ProcessEggs';
         
-        var type = (Action === 'TurnEgg') ? 'pet_turn_egg' : 'turn_egg';
+        var type = (Action === 'TurnEgg') ? 'turn_egg' : 'turn_egg';
  
         console.log('Remaining Eggs', Eggs.length);
+        $('.ui-dialog-buttonpane').find('button').click();
+        $('#profile').find('button[onclick*="' + type + '"]').click();
         
-        if ($('#profile form .actions').find('button[onclick*=' + type + ']').length) {
-            console.log('Clicking Button');
-            $('#profile form .actions').find('button[onclick*=' + type + ']').click();
-            return;
-        }
-        else if ($('.ui-dialog-buttonpane').find('button').length) {
-            console.log('Clicking Dialog');
-            $('.ui-dialog-buttonpane').find('button').click();
+        //if ($('#profile form .actions').find('button[onclick*=' + type + ']').length) {
+        //    console.log('Clicking Button');
+        //    $('#profile form .actions').find('button[onclick*=' + type + ']').click();
+        //}
+        //else if ($('.ui-dialog-buttonpane').find('button').length) {
+        //    console.log('Clicking Dialog');
+        //    $('.ui-dialog-buttonpane').find('button').click();
             // Dialog closing will not invoke ajaxComplete thus breaking the chain process.
             // Reinvoke the function to move to the next step
-            ProcessEggs();
-            return;
-        }
-        
-        else if (Array.isArray(Eggs) && Eggs.length > 0) {
+        //    ProcessEggs();
+        //    return;
+        //}
+    clearTimeout(Timer);
+    Timer = setTimeout(function() {     
+        if (Array.isArray(Eggs) && Eggs.length > 0) {
             var url = Eggs.shift();
             window.location = url;
             return;
@@ -328,7 +329,7 @@ function ProcessEggs() {
         
         console.log('Processing Eggs', Eggs);
         
-    }, 2500);
+    }, 1000);
 }
 
 
