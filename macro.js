@@ -262,9 +262,9 @@ function ScanEggs() {
             });
             setTimeout(function() {
                 if (Eggs.length > 0) {
-                    nextQueue = Queues.shift();
+                    Mode = false;
                     Queues.unshift(ScanEggs);
-                    resetMode(nextQueue);
+                    ProcessEggs();
                 }
                 else {
                     resetMode(ScanEggs);
@@ -350,3 +350,4 @@ function StopOperations() {
 }
 
 StartMacro();
+
