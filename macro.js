@@ -286,7 +286,10 @@ function ProcessEggs() {
         }
         Mode = 'ProcessEggs';
         setTimeout(function() {
-            window.location = Eggs.pop();
+            var Egg = Eggs.pop();
+            if (Egg) {
+                window.location = Eggs.pop();
+            }
         }, 300);
     }
     else if (Mode === 'ProcessEggs') {
