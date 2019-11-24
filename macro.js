@@ -24,17 +24,18 @@ function StartMacro() {
                 FeedPets();
             }
         
-            if (Eggs.length > 0) {
-                Mode = 'ProcessEggs';   
+            if (Array.isArray(Eggs) && Eggs.length) {
+                //Mode = 'ProcessEggs';   
             }
-            else if (Friends.length > 0) {
-                Mode = 'ScanEggs';   
+        
+            else if (Array.isArray(Friends) && Friends.length) {
+                //Mode = 'ScanEggs';   
             }
         
             console.log('Current Mode', Mode);
             switch (Mode) {
                 case 'ScanFriends':
-                    ScanFriends;
+                    ScanFriends();
                     break;
                     
                 case 'ScanEggs' :
@@ -44,6 +45,7 @@ function StartMacro() {
                 case 'ProcessEggs':
                     ProcessEggs();
                     break;
+                    
                 case 'StartQueue':
                     StartQueue();
                     break;
@@ -54,7 +56,16 @@ function StartMacro() {
 
             // Number 1 pressed
             if (e.keyCode === 49) {
-                TurningEggs();
+                Action = 'TurnEgg';
+                Mode = false;
+                Queues = [
+                    StartQueue,
+                    ScanFriends,
+                    ScanEggs,
+                    ProcessEggs,
+                    StopOperations
+                ];
+                callNextQueue();
             }
             // Number 2 pressed
             else if (e.keyCode === 50) {
@@ -64,7 +75,14 @@ function StartMacro() {
         
             // Number 3 pressed
             else if (e.keyCode === 51) {
-                HatchingEggs();
+                Action = 'HatchEgg';
+                Queues = [
+                    StartQueue,
+                    ScanEggs,
+                    ProcessEggs,
+                    StopOperations
+                ];
+                callNextQueue();
             }
 
             // Number 4 pressed
@@ -198,54 +216,61 @@ function callNextQueue() {
 }
 
 function StartQueue() {
-    RunningIndicator();
-    var url = '';
-    switch (Action) {
-        case 'TurnEgg':
-            url = $('#header #self .avatar').attr('href')
-            break;
-        case 'HatchEgg':
-            Mode = 'ScanEggs';
-            url = '#!/?src=pets&sub=hatchery';
-            break;
-    }
-    
-    if (window.location.hash !==  url) {
-        Mode = 'StartQueue';
-        window.location = url;
-    }
-    else {
-        resetMode(callNextQueue);
-    }
+    clearTimeout(Timer);
+    Timer = setTimeout(function() {
+        RunningIndicator();
+        var url = '';
+        switch (Action) {
+            case 'TurnEgg':
+                url = $('#header #self .avatar').attr('href')
+                break;
+                
+            case 'HatchEgg':
+                Mode = 'ScanEggs';
+                url = '#!/?src=pets&sub=hatchery';
+                break;
+        }
+
+        if (String(window.location.hash) !==  String(url)) {
+            Mode = 'StartQueue';
+            window.location = url;
+        }
+        else {
+            resetMode(callNextQueue);
+        } 
+    }, 10);
 }
 
 
 function ScanFriends() {
     clearTimeout(Timer);
     Timer = setTimeout(function() {
+        Mode = 'ScanFriends';
+        
         var Targets = $('#overlay .friends a.user.avatar');
         var Button = $('fieldset.friends').find('button');    
         
-        if (Button.length) {
-            Mode = 'ScanFriends';
+        if (!Targets.length) {
             $('fieldset.friends').find('button').click();
+            ScanFriends();
         }
-        else if (Targets.length) {
+        else {
             Targets.each(function() {
                 Friends.push($(this).attr('href'));
             });
-        }
-        else if (Targets.length === Friends.length) {
             resetMode(callNextQueue);
         }
-    }, 1000);
-    
-    console.log('Scanning Friends', Friends);
+        
+        console.log('Scanning Friends', Friends);
+        
+    }, 500);
 }
 
 function ScanEggs() { 
     clearTimeout(Timer);
     Timer = setTimeout(function() {
+        Mode = 'ScanEggs';
+        
         var type = (Action === 'TurnEgg') ? 'Turn Egg' : 'Hatch Egg';
         var Targets = $('#hatchery').find('img[title="' + type + '"]');
 
@@ -255,83 +280,66 @@ function ScanEggs() {
             });
         }
 
-        if (Friends.length) {
-            Mode = 'ScanEggs';
+        if (Array.isArray(Friends) && Friends.length) {
             window.location = Friends.pop().replace('#!/?', '#!/?src=pets&sub=hatchery&');
         }
         else {
             resetMode(callNextQueue);
         }
-    }, 1000);    
-    
-    console.log('Scanning Eggs', Eggs);
+        
+        console.log('Scanning Eggs', Eggs);
+        
+    }, 500);    
 }
 
 function ProcessEggs() {
     clearTimeout(Timer);
     Timer = setTimeout(function() {
+        Mode = 'ProcessEggs';
+        
         var type = (Action === 'TurnEgg') ? 'pet_turn_egg' : 'turn_egg';
         var Dialog = $('.ui-dialog-buttonpane').find('button');
         var Button = $('#profile').find('button[onclick*=' + type + ']');
         
+        console.log('Remaining Eggs', Eggs.length);
+        
         if (Button.length) {
             Button.click();
+            return;
         }
         else if (Dialog.length) {
             Dialog.click();
-            ProcessEggs();
         }
-        else if (Eggs.length === 0) {
-            resetMode(callNextQueue);
+        
+        if (Array.isArray(Eggs) && Eggs.length > 0) {
+            var url = Eggs.shift();
+            window.location = url;
         }
         else {
-            Mode = 'ProcessEggs';
-            window.location = Eggs.pop();
+            resetMode(callNextQueue);
         }
+        
+        console.log('Processing Eggs', Eggs);
+        
     }, 1000);
-    
-    console.log('Processing Eggs', Eggs);
 }
-
-
-function HatchingEggs() {
-    Action = 'HatchEgg';
-    Queues = [
-        StartQueue,
-        ScanEggs,
-        ProcessEggs,
-        StopOperations
-    ];
-    callNextQueue();
-}
-
-function TurningEggs() {
-    Action = 'TurnEgg';
-    Mode = false;
-    Queues = [
-        StartQueue,
-        ScanFriends,
-        ScanEggs,
-        ProcessEggs,
-        StopOperations
-    ];
-    callNextQueue();
-}
-
 
 
 function StopOperations() {
     console.log('Stopping Operations');
-    Turning  = false;
     Feeding  = false;
-    Hatching = false;
     State    = '';
     Counter  = 0;
-    callNextQueue();
+    
+    Queues   = [];
+    Friends  = [];
+    Eggs     = [];
+    Mode     = false;
+    Action   = '';
+    
     clearTimeout(Timer);
     StopRunningIndicator();
-    resetMode();
-    resetAction();
+
     window.location = $('#header #self .avatar').attr('href');
 }
 
