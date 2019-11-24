@@ -26,12 +26,15 @@ function StartMacro() {
         
             if (Array.isArray(Eggs) && Eggs.length > 0) {
                 console.log('Total Eggs found', Eggs.length);
-                //Mode = 'ProcessEggs';   
+                Mode = 'ProcessEggs';   
             }
         
-            else if (Array.isArray(Friends) && Friends.length > 0) {
-                console.log('Total Friends found', Friends.length);
-                //Mode = 'ScanEggs';   
+            else {
+                if (Array.isArray(Friends) && Friends.length > 0) {
+                    console.log('Total Friends found', Friends.length);
+                    Mode = 'ScanEggs'; 
+                    console.log('Mode set', Mode);
+                }
             }
         
             console.log('Current Mode', Mode);
@@ -220,6 +223,7 @@ function callNextQueue() {
 function StartQueue() {
     clearTimeout(Timer);
     Timer = setTimeout(function() {
+        Mode = 'StartQueue';
         RunningIndicator();
         var url = '';
         switch (Action) {
@@ -234,7 +238,6 @@ function StartQueue() {
         }
 
         if (String(window.location.hash) !==  String(url)) {
-            Mode = 'StartQueue';
             window.location = url;
         }
         else {
@@ -265,7 +268,7 @@ function ScanFriends() {
         
         console.log('Scanning Friends', Friends);
         
-    }, 500);
+    }, 1500);
 }
 
 function ScanEggs() { 
@@ -285,13 +288,13 @@ function ScanEggs() {
         if (Array.isArray(Friends) && Friends.length) {
             window.location = Friends.pop().replace('#!/?', '#!/?src=pets&sub=hatchery&');
         }
-        else {
-            resetMode(callNextQueue);
-        }
+        //else {
+        //    resetMode(callNextQueue);
+        //}
         
         console.log('Scanning Eggs', Eggs);
         
-    }, 500);    
+    }, 2100);    
 }
 
 function ProcessEggs() {
@@ -300,30 +303,32 @@ function ProcessEggs() {
         Mode = 'ProcessEggs';
         
         var type = (Action === 'TurnEgg') ? 'pet_turn_egg' : 'turn_egg';
-        var Dialog = $('.ui-dialog-buttonpane').find('button');
-        var Button = $('#profile').find('button[onclick*=' + type + ']');
-        
+ 
         console.log('Remaining Eggs', Eggs.length);
         
-        if (Button.length) {
-            Button.click();
+        if ($('#profile form .actions').find('button[onclick*=' + type + ']').length) {
+            console.log('Clicking Button');
+            $('#profile form .actions').find('button[onclick*=' + type + ']').click();
             return;
         }
-        else if (Dialog.length) {
-            Dialog.click();
+        else if ($('.ui-dialog-buttonpane').find('button').length) {
+            console.log('Clicking Dialog');
+            $('.ui-dialog-buttonpane').find('button').click();
+            // Dialog closing will not invoke ajaxComplete thus breaking the chain process.
+            // Reinvoke the function to move to the next step
+            ProcessEggs();
+            return;
         }
         
-        if (Array.isArray(Eggs) && Eggs.length > 0) {
+        else if (Array.isArray(Eggs) && Eggs.length > 0) {
             var url = Eggs.shift();
             window.location = url;
-        }
-        else {
-            resetMode(callNextQueue);
+            return;
         }
         
         console.log('Processing Eggs', Eggs);
         
-    }, 1000);
+    }, 2500);
 }
 
 
