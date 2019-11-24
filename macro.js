@@ -285,12 +285,7 @@ function ProcessEggs() {
             return;
         }
         Mode = 'ProcessEggs';
-        setTimeout(function() {
-            var Egg = Eggs.pop();
-            if (Egg) {
-                window.location = Eggs.pop();
-            }
-        }, 300);
+        window.location = Eggs.pop();
     }
     else if (Mode === 'ProcessEggs') {
         var Dialog = $('.ui-dialog-buttonpane').find('button');
