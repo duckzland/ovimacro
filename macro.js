@@ -24,10 +24,6 @@ function StartMacro() {
                 FeedPets();
             }
         
-            if (Eggs.length > 0) {
-                Mode = 'ProcessEggs';
-            }
-        
             console.log('Current Mode', Mode);
             switch (Mode) {
                     
@@ -291,11 +287,11 @@ function ProcessEggs() {
         var Dialog = $('.ui-dialog-buttonpane').find('button');
         var Button = $('#profile').find('button[onclick*=' + type + ']');
         
-        if (Dialog.length) {
-            Dialog.click();
-        }
-        else if (Button.length !== 0) {
+        if (Button.length) {
             Button.click();
+        }
+        else if (Dialog.length) {
+            Dialog.click();
         }
         else {
             resetMode(ProcessEggs);
