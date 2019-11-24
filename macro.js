@@ -24,22 +24,28 @@ function StartMacro() {
                 FeedPets();
             }
         
+            if (Eggs.length > 0) {
+                Mode = 'ProcessEggs';   
+            }
+            else if (Friends.length > 0) {
+                Mode = 'ScanEggs';   
+            }
+        
             console.log('Current Mode', Mode);
             switch (Mode) {
-                    
                 case 'ScanFriends':
-                    setTimeout(ScanFriends, 300);
+                    ScanFriends;
                     break;
                     
                 case 'ScanEggs' :
-                    setTimeout(ScanEggs(), 300);
+                    ScanEggs();
                     break;
                     
                 case 'ProcessEggs':
-                    setTimeout(ProcessEggs(), 300);
+                    ProcessEggs();
                     break;
                 case 'StartQueue':
-                    setTimeout(StartQueue(), 300);
+                    StartQueue();
                     break;
             }
         })
@@ -192,98 +198,79 @@ function callNextQueue() {
 }
 
 function StartQueue() {
-    if (Mode === false) {
-        RunningIndicator();
-        var url = '';
-        switch (Action) {
-            case 'TurnEgg':
-                url = $('#header #self .avatar').attr('href')
-                break;
-            case 'HatchEgg':
-                Mode = 'ScanEggs';
-                url = '#!/?src=pets&sub=hatchery';
-                break;
-        }
-
-        if (window.location.hash !==  url) {
-            Mode = 'StartQueue';
-            window.location = url;
-        }
-        else {
-            console.log('firing queue');
-            callNextQueue();
-        }
+    RunningIndicator();
+    var url = '';
+    switch (Action) {
+        case 'TurnEgg':
+            url = $('#header #self .avatar').attr('href')
+            break;
+        case 'HatchEgg':
+            Mode = 'ScanEggs';
+            url = '#!/?src=pets&sub=hatchery';
+            break;
     }
-    else if (Mode === 'StartQueue') {
+    
+    if (window.location.hash !==  url) {
+        Mode = 'StartQueue';
+        window.location = url;
+    }
+    else {
         resetMode(callNextQueue);
     }
 }
 
 
 function ScanFriends() {
-    if (Mode === false) {
-        if (Friends.length !== 0) {
-            callNextQueue();
-            return;
-        }
-        Mode = 'ScanFriends';
-        $('fieldset.friends').find('button').click();
-    }
-    else if (Mode === 'ScanFriends') {
-        $('#overlay .friends a.user.avatar').each(function() {
-            Friends.push($(this).attr('href'));
-        });
+    clearTimeout(Timer);
+    Timer = setTimeout(function() {
+        var Targets = $('#overlay .friends a.user.avatar');
+        var Button = $('fieldset.friends').find('button');    
         
-        resetMode(ScanFriends);
-    }    
+        if (Button.length) {
+            Mode = 'ScanFriends';
+            $('fieldset.friends').find('button').click();
+        }
+        else if (Targets.length) {
+            Targets.each(function() {
+                Friends.push($(this).attr('href'));
+            });
+        }
+        else if (Targets.length === Friends.length) {
+            resetMode(callNextQueue);
+        }
+    }, 1000);
     
     console.log('Scanning Friends', Friends);
 }
 
 function ScanEggs() { 
-    var type = (Action === 'TurnEgg') ? 'Turn Egg' : 'Hatch Egg';
-    
-    if (Mode === false) {
-        if (Friends.length === 0) {
-            callNextQueue();
-            return;
-        }
-        Mode = 'ScanEggs';
-        window.location = Friends.pop().replace('#!/?', '#!/?src=pets&sub=hatchery&');
-    }
-    else if (Mode === 'ScanEggs') {
-        setTimeout(function() {
-            $('#hatchery').find('img[title="' + type + '"]').each(function() {
+    clearTimeout(Timer);
+    Timer = setTimeout(function() {
+        var type = (Action === 'TurnEgg') ? 'Turn Egg' : 'Hatch Egg';
+        var Targets = $('#hatchery').find('img[title="' + type + '"]');
+
+        if (Targets.length) {
+            Targets.each(function() {
                 Eggs.push($(this).parent().parent().children('a').attr('href'));
             });
-            setTimeout(function() {
-                if (Eggs.length > 0) {
-                    Mode = false;
-                    Queues.unshift(ScanEggs);
-                    ProcessEggs();
-                }
-                else {
-                    resetMode(ScanEggs);
-                }
-            }, 300);
-        }, 300);
-    }
+        }
+
+        if (Friends.length) {
+            Mode = 'ScanEggs';
+            window.location = Friends.pop().replace('#!/?', '#!/?src=pets&sub=hatchery&');
+        }
+        else {
+            resetMode(callNextQueue);
+        }
+    }, 1000);    
     
     console.log('Scanning Eggs', Eggs);
 }
 
-function ProcessEggs() { 
-    var type = (Action === 'TurnEgg') ? 'turn_egg' : 'pet_turn_egg';
-
-    if (Mode === false) {
-        if (Eggs.length === 0) {
-            callNextQueue();
-            return;
-        }
-        Mode = 'ProcessEggs';
-        window.location = Eggs.pop();
-    }
-    else if (Mode === 'ProcessEggs') {
+function ProcessEggs() {
+    clearTimeout(Timer);
+    Timer = setTimeout(function() {
+        var type = (Action === 'TurnEgg') ? 'pet_turn_egg' : 'turn_egg';
         var Dialog = $('.ui-dialog-buttonpane').find('button');
         var Button = $('#profile').find('button[onclick*=' + type + ']');
         
@@ -292,11 +279,16 @@ function ProcessEggs() {
         }
         else if (Dialog.length) {
             Dialog.click();
+            ProcessEggs();
+        }
+        else if (Eggs.length === 0) {
+            resetMode(callNextQueue);
         }
         else {
-            resetMode(ProcessEggs);
+            Mode = 'ProcessEggs';
+            window.location = Eggs.pop();
         }
-    }
+    }, 1000);
     
     console.log('Processing Eggs', Eggs);
 }
@@ -344,4 +336,3 @@ function StopOperations() {
 }
 
 StartMacro();
-
