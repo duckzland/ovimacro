@@ -4,6 +4,7 @@ var Turning  = false;
 var Feeding  = false;
 var Hatching = false;
 var Timer    = false;
+var Scanning = false;
 var Delay    = 1000;
 var State    = '';
 var Counter  = 0;
@@ -14,10 +15,16 @@ function StartMacro() {
     if (Started) return;
 
     Started = true;
+    
+    document.body.addEventListener("DOMNodeInserted", function(evt) {
+        if (Turning || Hatching || Feeding) {
+            $('img').removeAttr('src');   
+        }
+    }, false);
 
     $(document)
         .off('ajaxComplete.ovipets_macro')
-        .on('ajaxComplete.ovipets_macro', function () {
+        .on('ajaxComplete.ovipets_macro', function (event, xhr, settings) {
             if (Turning) {
                 TurnEgg();
             }
@@ -26,15 +33,17 @@ function StartMacro() {
             }
             else if (Feeding) {
                 FeedPets();
-            }
+            }        
         })
         .off('keypress.ovipets_macro')
         .on('keypress.ovipets_macro', function (e) {
 
             // Number 1 pressed
             if (e.keyCode === 49) {
-                Turning = true;
-                ScanFriends(TurnEgg);
+                ScanFriends(function() {
+                    Turning = true;
+                    TurnEgg(); 
+                });
             }
             // Number 2 pressed
             else if (e.keyCode === 50) {
@@ -114,20 +123,14 @@ function isPetTabActive(n = 0) {
 function ScanFriends(callFunc = false) {   
     // Move to the user page
     if ($('button[onclick*=fbinvite]').length === 0) {
-        goToMyPage();    
-        clearTimeout(Timer);
-        Timer = setTimeout(function() {
-            ScanFriends();
-        }, 1000);
+        goToMyPage();
+        Scanning = true;
     }
     
     // Open friends list
     else if ($('#overlay .friends a.user.avatar').length === 0) {
-        $('fieldset.friends').find('button').click();
-        clearTimeout(Timer);
-        Timer = setTimeout(function() {
-            ScanFriends();
-        }, 1000);
+        $('fieldset.friends').find('button:not(.clicked)').addClass('clicked').click();
+        Scanning = true;
     }
     
     // Scan all friends and store their profile url then boot the callback function
@@ -136,8 +139,17 @@ function ScanFriends(callFunc = false) {
         $('#overlay .friends a.user.avatar').each(function() {
             Friends.push($(this).attr('href'));
         });
+        $('fieldset.friends').find('button').removeClass('clicked');44
         $('#overlay').hide();
+        Scanning = false;
         callFunc && callFunc();
+    }
+    
+    clearTimeout(Timer);
+    if (Scanning) {
+        Timer = setTimeout(function() {
+            ScanFriends(callFunc);
+        }, 300);
     }
 }
 
@@ -310,8 +322,10 @@ function StopOperations() {
     Turning  = false;
     Feeding  = false;
     Hatching = false;
+    Scanning = false;
     State    = '';
     Counter  = 0;
+    Friends  = [];
     clearTimeout(Timer);
     StopRunningIndicator();
 }
