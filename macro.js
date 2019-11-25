@@ -7,12 +7,14 @@ var Timer    = false;
 var Delay    = 1000;
 var State    = '';
 var Counter  = 0;
+var Friends  = [];
 
 function StartMacro() {
 
     if (Started) return;
 
     Started = true;
+
     $(document)
         .off('ajaxComplete.ovipets_macro')
         .on('ajaxComplete.ovipets_macro', function () {
@@ -32,7 +34,7 @@ function StartMacro() {
             // Number 1 pressed
             if (e.keyCode === 49) {
                 Turning = true;
-                TurnEgg();
+                ScanFriends(TurnEgg);
             }
             // Number 2 pressed
             else if (e.keyCode === 50) {
@@ -75,7 +77,11 @@ function goToHatchery() {
 
 
 function goToFriend(n = 0) {
-    $('#sub_feed #user .friends ul li img').eq(n).click();
+    //$('#sub_feed #user .friends ul li img').eq(n).click();
+    var url = Friends[n];
+    if (url) {
+        window.location = url;   
+    }
 }
 
 
@@ -90,7 +96,8 @@ function goToPetTab(n = 0) {
 
 
 function hasFriend(n = 0) {
-    return $('#sub_feed #user .friends ul li img').eq(n).length > 0;    
+    //return $('#sub_feed #user .friends ul li img').eq(n).length > 0;    
+    return typeof Friends[n] !== 'undefined';
 }
 
 
@@ -101,6 +108,37 @@ function hasPetTab(n = 0) {
 
 function isPetTabActive(n = 0) {
     return $('#src_pets #sub_overview #enclosures .ui-sortable li').eq(n).hasClass('ui-tabs-active');
+}
+
+
+function ScanFriends(callFunc = false) {   
+    // Move to the user page
+    if ($('button[onclick*=fbinvite]').length === 0) {
+        goToMyPage();    
+        clearTimeout(Timer);
+        Timer = setTimeout(function() {
+            ScanFriends();
+        }, 1000);
+    }
+    
+    // Open friends list
+    else if ($('#overlay .friends a.user.avatar').length === 0) {
+        $('fieldset.friends').find('button').click();
+        clearTimeout(Timer);
+        Timer = setTimeout(function() {
+            ScanFriends();
+        }, 1000);
+    }
+    
+    // Scan all friends and store their profile url then boot the callback function
+    else {
+        Friends  = [];
+        $('#overlay .friends a.user.avatar').each(function() {
+            Friends.push($(this).attr('href'));
+        });
+        $('#overlay').hide();
+        callFunc && callFunc();
+    }
 }
 
 
@@ -116,7 +154,7 @@ function TurnEgg() {
     RunningIndicator();
    
     // We are on our own front page
-    if (SelfPage.length !== 0) {
+    if (SelfPage.length !== 0) {        
         if (hasFriend(Counter)) {
             goToFriend(Counter);
             Counter++;
