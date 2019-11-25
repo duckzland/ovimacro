@@ -26,13 +26,13 @@ function StartMacro() {
         
             if (Array.isArray(Eggs) && Eggs.length > 0) {
                 console.log('Total Eggs found', Eggs.length);
-                //Mode = 'ProcessEggs';   
+                Mode = 'ProcessEggs';   
             }
         
             else {
                 if (Array.isArray(Friends) && Friends.length > 0) {
                     console.log('Total Friends found', Friends.length);
-                    //Mode = 'ScanEggs'; 
+                    Mode = 'ScanEggs'; 
                     console.log('Mode set', Mode);
                 }
             }
@@ -276,60 +276,91 @@ function ScanEggs() {
     Timer = setTimeout(function() {
         Mode = 'ScanEggs';
         
-        var type = (Action === 'TurnEgg') ? 'Turn Egg' : 'Hatch Egg';
-        var Targets = $('#hatchery').find('img[title="' + type + '"]');
-
-        if (Targets.length) {
-            Targets.each(function() {
-                Eggs.push($(this).parent().parent().children('a').attr('href'));
-            });
-        }
-
-        if (Array.isArray(Friends) && Friends.length) {
-            window.location = Friends.pop().replace('#!/?', '#!/?src=pets&sub=hatchery&');
-        }
-        else {
+        // No valid friends found   
+        if (!Array.isArray(Friends) || Friends.length === 0 || !Friends[0]) {
             resetMode(callNextQueue);
+            return;
         }
         
+        // We are not on friend page
+        if (String(window.location.hash) !== String(Friends[0]).replace('#!/?', '#!/?src=pets&sub=hatchery&')) {
+            window.location = String(Friends[0]).replace('#!/?', '#!/?src=pets&sub=hatchery&');
+        }
+        
+        // We are on friend page
+        else {
+            var type = (Action === 'TurnEgg') ? 'Turn Egg' : 'Hatch Egg';
+            var Targets = $('#hatchery').find('img[title="' + type + '"]');
+            var i = 0;
+            var t = Targets.length;
+            
+            if (t === 0) {
+                Friends.shift();
+                ScanEggs();
+            }
+            else {
+                Targets.each(function() {
+                    Eggs.push($(this).parent().parent().children('a').attr('href'));
+                    i++;
+
+                    // Make sure we have all the targets injected before moving to next page
+                    if (i === t) {
+                        Friends.shift();
+                        ScanEggs();
+                    }
+                });
+            }
+        }
         console.log('Scanning Eggs', Eggs);
         
-    }, 1000);    
+    }, 800);    
 }
 
 function ProcessEggs() {
 
-        Mode = 'ProcessEggs';
-        
-        var type = (Action === 'TurnEgg') ? 'turn_egg' : 'turn_egg';
- 
-        console.log('Remaining Eggs', Eggs.length);
-        $('.ui-dialog-buttonpane').find('button').click();
-        $('#profile').find('button[onclick*="' + type + '"]').click();
-        
-        //if ($('#profile form .actions').find('button[onclick*=' + type + ']').length) {
-        //    console.log('Clicking Button');
-        //    $('#profile form .actions').find('button[onclick*=' + type + ']').click();
-        //}
-        //else if ($('.ui-dialog-buttonpane').find('button').length) {
-        //    console.log('Clicking Dialog');
-        //    $('.ui-dialog-buttonpane').find('button').click();
-            // Dialog closing will not invoke ajaxComplete thus breaking the chain process.
-            // Reinvoke the function to move to the next step
-        //    ProcessEggs();
-        //    return;
-        //}
-    clearTimeout(Timer);
-    Timer = setTimeout(function() {     
-        if (Array.isArray(Eggs) && Eggs.length > 0) {
-            var url = Eggs.shift();
-            window.location = url;
-            return;
+    console.log('Process egg is firing');
+    Mode = 'ProcessEggs';
+    var type = (Action === 'TurnEgg') ? 'turn_egg' : 'turn_egg';
+    
+    // No valid egg found   
+    if (!Array.isArray(Eggs) || Eggs.length === 0 || !Eggs[0]) {
+        if (Array.isArray(Friends) && !Friends.length) {
+            resetMode(callNextQueue);
         }
+        else {
+            ScanEggs();
+        }
+        return;
+    }
+    
+    // We are not on egg page
+    if (String(window.location.hash) !== String(Eggs[0])) {
+        setTimeout(function() {
+            window.location = Eggs[0];
+        }, 1000);
+    }
+    
+    // We are on egg page
+    else {        
+         $('.ui-dialog-buttonpane').find('button').click();
         
-        console.log('Processing Eggs', Eggs);
+        if ($('#profile').find('button[onclick*="' + type + '"]').not('.clicked-processing').length) {
+            setTimeout(function() {
+                $('#profile').find('button[onclick*="' + type + '"]').addClass('clicked-processing').click();
+            }, 1000);
+        }
+        else {
+            setTimeout(function() {
+                if ($('#profile').find('button[onclick*="' + type + '"]').length === 0) {
+                    Eggs.shift();
+                }
+                ProcessEggs();
+            }, 1000);
+        }
+    }
         
-    }, 1000);
+    console.log('Remaining Eggs', Eggs.length);
+    console.log('Processing Eggs', Eggs);
 }
 
 
