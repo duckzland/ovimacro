@@ -10,4 +10,6 @@ Simple Javascript for macroing ovipets egg turning and pets feeding.
     or Press 3 to crawl your hatchery and hatch all eggs  
 4. Press 4 to stop the egg turning or pets feeding macro
 
+Found this script useful? Don't forget to give star to this github project.
+
 Enjoy!
