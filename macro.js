@@ -17,7 +17,7 @@ function StartMacro() {
     Started = true;
     
     document.body.addEventListener("DOMNodeInserted", function(evt) {
-        if (Turning || Hatching || Feeding) {
+        if (Hatching || Feeding) {
             $('img').removeAttr('src');   
         }
     }, false);
